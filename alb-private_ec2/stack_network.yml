@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  VPC & subnet create
+Parameters:
+  ProjectId:
+    Description: Project name id.
+    Type: String
+    MinLength: "3"
+    MaxLength: "10"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must specify Project id.
+
+Resources:
+# Create VPC
+  CFVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      InstanceTenancy: default
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"vpc" ] ]
+
+# Create Public RouteTable
+  CFPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CFVPC
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"PublicRouteTable" ] ]
+
+# Create Private RouteTable
+  CFPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CFVPC
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"PrivateRouteTable" ] ]
+
+# Create Public Subnet A
+  CFPublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "ap-northeast-1a"
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"PublicSubnetA" ] ]
+  PubSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPublicSubnetA
+      RouteTableId: !Ref CFPublicRouteTable
+
+# Create Public Subnet C
+  CFPublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: "ap-northeast-1c"
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"PublicSubnetC" ] ]
+  PubSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPublicSubnetC
+      RouteTableId: !Ref CFPublicRouteTable
+
+# Create Private Subnet A
+  CFPrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: "ap-northeast-1a"
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"PrivateSubnetA" ] ]
+  PriSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPrivateSubnetA
+      RouteTableId: !Ref CFPrivateRouteTable
+
+# Create Private Subnet C
+  CFPrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.4.0/24
+      AvailabilityZone: "ap-northeast-1c"
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"PrivateSubnetC" ] ]
+  PriSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPrivateSubnetC
+      RouteTableId: !Ref CFPrivateRouteTable
+
+# Create InternetGateway
+  CFInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join [ "-", [ "Ref":"ProjectId" ,"IGW" ] ]
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref CFVPC
+      InternetGatewayId: !Ref CFInternetGateway
+  myRoute:
+    Type: AWS::EC2::Route
+    DependsOn: CFInternetGateway
+    Properties:
+      RouteTableId: !Ref CFPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref CFInternetGateway
+
+Outputs:
+  StackVPC:
+    Description: The ID of the VPC
+    Value: !Ref CFVPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID"
+
+  StackPubSubnetA:
+    Description: The ID of the VPC Subnet
+    Value: !Ref CFPublicSubnetA
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetA"
+
+  StackPubSubnetB:
+    Description: The ID of the VPC Subnet
+    Value: !Ref CFPublicSubnetC
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnetC"
+
+  StackPriSubnetA:
+    Description: The ID of the VPC Subnet
+    Value: !Ref CFPrivateSubnetA
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetA"
+
+  StackPriSubnetB:
+    Description: The ID of the VPC Subnet
+    Value: !Ref CFPrivateSubnetC
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetC"

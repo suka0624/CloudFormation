@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  SecurityGroup create
+Parameters:
+  ProjectId:
+    Description: Project name id.
+    Type: String
+    MinLength: "3"
+    MaxLength: "10"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must specify Project id.
+
+Resources:
+  # Step Server SG
+  StepServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: "PublicSecurityGroupForStepServer"
+      GroupDescription: "SecurityGroup for step_server(public)"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 
+      Tags:
+        - Key: name
+          Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForStepServer" ] ]
+      VpcId: !ImportValue "networkStack-VPCID"
+
+  # WebServerSG
+  WebServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: "PrivateSecurityGroupForWebServer"
+      GroupDescription: "SecurityGroup for web_server(private)"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: xx.xx.xx.xx/32
+      Tags:
+        - Key: name
+          Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForWebServer001" ] ]
+      VpcId: !ImportValue "networkStack-VPCID"
+
+  # ALB SG
+  ALBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: "SecurityGroupForALB"
+      GroupDescription: "SecurityGroup For ALB"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForALB" ] ]
+      VpcId: !ImportValue "networkStack-VPCID"
+
+Outputs:
+  StackStepServerSG:
+    Value: !Ref StepServerSecurityGroup
+    Export:
+      Name: 
+      Name: !Sub "${AWS::StackName}-StepServerSG"
+
+  StackWebServerSG:
+    Value: !Ref WebServerSecurityGroup
+    Export:
+      Name: 
+      Name: !Sub "${AWS::StackName}-WebServerSG"
+
+  StackALBSG:
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: 
+      Name: !Sub "${AWS::StackName}-ALBSG"
