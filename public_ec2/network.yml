@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  VPC & subnet create
+Parameters:
+  ProjectId:
+    Description: Project name id.
+    Type: String
+    MinLength: "3"
+    MaxLength: "10"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must specify Project id.
+
+Resources:
+  # Create VPC
+  CFVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      InstanceTenancy: default
+      Tags:
+      - Key: name
+        Value: !Join [ "-", [ "Ref":"ProjectId", "vpc"] ]
+
+  # Create Public RouteTable
+  CFPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CFVPC
+      Tags:
+      - Key: name
+        Value: !Join [ "-", [ "Ref":"ProjectId", "PublicRouteTable" ] ]
+  
+  # Create Public Subnet
+  CFPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: "ap-northeast-1a"
+      Tags:
+      - Key: name
+        Value: !Join [ "-", [ "Ref":"ProjectId", "PublicSubnet" ] ]
+  
+  # Subnet - RouteTable Association
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPublicSubnet
+      RouteTableId: !Ref CFPublicRouteTable
+
+  # Create InternetGateway
+  CFInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+      - Key: name
+        Value: !Join [ "-", [ "Ref":"ProjectId", "IGW" ] ]
+  
+  # Attach InternetGateway to VPC
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref CFVPC
+      InternetGatewayId: !Ref CFInternetGateway
+  
+  # Route Setting
+  MyRoute:
+    Type: AWS::EC2::Route
+    DependsOn: CFInternetGateway
+    Properties:
+      RouteTableId: !Ref CFPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref CFInternetGateway
+  
+Outputs:
+  StackVPC:
+    Description: The ID of the VPC
+    Value: !Ref CFVPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID"
+  
+  StackPubSubnet:
+    Description: The ID of the VPC Subnet
+    !Ref CFPublicSubnet
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicSubnet"
