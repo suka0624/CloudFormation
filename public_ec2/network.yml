@@ -81,6 +81,6 @@ Outputs:
   
   StackPubSubnet:
     Description: The ID of the VPC Subnet
-    !Ref CFPublicSubnet
+    Value: !Ref CFPublicSubnet
     Export:
       Name: !Sub "${AWS::StackName}-PublicSubnet"
