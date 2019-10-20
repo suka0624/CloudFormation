@@ -1,0 +1,60 @@
+  
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  SecurityGroup create
+Parameters:
+  ProjectId:
+    Description: Project name id.
+    Type: String
+    MinLength: "3"
+    MaxLength: "10"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must specify Project id.
+
+Resources:
+  # WebServer SG
+  WebServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: "PublicSgForWeb"
+      GroupDescription: "SecurityGroup for WebServer(public)"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: name
+          Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForWebServer" ] ]
+      VpcId: !ImportValue "network-VPCID"
+  
+  # ServerSpec Server SG
+  ServerSpecServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupName: "PublicSgForServerSpec"
+      GroupDescription: "SecurityGroup for ServerSpecServer(public)"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: name
+          Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForServerSpecServer" ] ]
+      VpcId: !ImportValue "network-VPCID"
+  
+Outputs:
+  StackWebServerSG:
+    Value: !Ref WebServerSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-WebServerSG"
+  
+  StackServerSpecServerSG:
+    Value: !Ref ServerSpecServerSecurityGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-ServerSpecServerSG"
