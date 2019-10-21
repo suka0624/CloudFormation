@@ -29,20 +29,16 @@ Resources:
           Value: !Join [ "-", [ "Ref":"ProjectId" ,"WebServer" ] ]
       KeyName: s_suka
   
-  # ServerSpecServer
-  ServerSpecServer:
-    Type: AWS::EC2::Instance
+  # RDS(MySQL)
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
     Properties:
-      NetworkInterfaces:
-        - SubnetId: !ImportValue "network-PublicSubnet"
-          GroupSet:
-            - !ImportValue "security-ServerSpecServerSG"
-          # Public IP割り当て
-          AssociatePublicIpAddress: true
-          DeviceIndex: "0"
-      ImageId: ami-0056953fc28a2355f
-      InstanceType: t2.micro
-      Tags:
-        - Key: 'Name'
-          Value: !Join [ "-", [ "Ref":"ProjectId" ,"ServerSpecServer" ] ]
-      KeyName: s_suka
+      AllocatedStorage: 5
+      DBInstanceClass: db.m1.small
+      Engine: MySQL
+      MasterUsername: test
+      MasterUserPassword: test
+      DBSubnetGroupName:
+        - !Ref network-RdsSubnetGroup
+      VPCSecurityGroups:
+        - !Ref security-RdsSG

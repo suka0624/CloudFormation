@@ -30,6 +30,15 @@ Resources:
       - Key: name
         Value: !Join [ "-", [ "Ref":"ProjectId", "PublicRouteTable" ] ]
   
+  # Create Private RouteTable
+  CFPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CFVPC
+      Tags:
+      - Key: Name
+        Value: !Join [ "-",["Ref":"ProjectId", "PrivateRouteTable"] ]
+
   # Create Public Subnet
   CFPublicSubnet:
     Type: AWS::EC2::Subnet
@@ -41,12 +50,60 @@ Resources:
       - Key: name
         Value: !Join [ "-", [ "Ref":"ProjectId", "PublicSubnet" ] ]
   
-  # Subnet - RouteTable Association
+  # PublicSubnet - RouteTable Association
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref CFPublicSubnet
       RouteTableId: !Ref CFPublicRouteTable
+  
+  # Create Private Subnet A
+  CFPrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: "ap-northeast-1a"
+      Tags:
+      - Key: Name
+        Value: !Join ["-", ["Ref":"ProjectId", "PrivateSubnetA"]]
+
+  # PrivateSubnetA - RouteTable Association
+  PriSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPrivateSubnetA
+      RouteTableId: !Ref CFPrivateRouteTable
+
+  # Create Private Subnet C
+  CFPrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CFVPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: "ap-northeast-1c"
+      Tags:
+      - Key: Name
+        Value: !Join ["-", ["Ref":"ProjectId", "PrivateSubnetC"]]
+
+  # PrivateSubnetC - RouteTable Association
+  PriSubnetCRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref CFPrivateSubnetC
+      RouteTableId: !Ref CFPrivateRouteTable
+
+  # RDS Subnet Group (RDSには2つのSubnetを指定するためグループ化が必要)
+  CFPrivateSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS SubnetGroup
+      SubnetIds:
+        - !Ref CFPrivateSubnetA
+        - !Ref CFPrivateSubnetC
+      Tags:
+        - Key: name
+          Value: !Join ["-", ["Ref":"ProjectId", "RDSSubnetGroup"]]
 
   # Create InternetGateway
   CFInternetGateway:
@@ -80,7 +137,25 @@ Outputs:
       Name: !Sub "${AWS::StackName}-VPCID"
   
   StackPubSubnet:
-    Description: The ID of the VPC Subnet
+    Description: The ID of the Public Subnet
     Value: !Ref CFPublicSubnet
     Export:
       Name: !Sub "${AWS::StackName}-PublicSubnet"
+  
+  StackPriSubnetA:
+    Description: The ID of the Private SubnetA
+    Value: !Ref CFPrivateSubnetA
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetA"
+  
+  StackPriSubnetC:
+    Description: The ID of the Private SubnetC
+    Value: !Ref CFPrivateSubnetC
+    Export:
+      Name: !Sub "${AWS::StackName}-PrivateSubnetC"
+
+  StackRdsSubnetGroup:
+    Description: The ID of the RDS Subnet Group
+    Value: !Ref CFPrivateSubnetGroup
+    Export:
+      Name: !Sub "${AWS::StackName}-RdsSubnetGroup"
