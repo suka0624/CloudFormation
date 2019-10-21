@@ -31,22 +31,21 @@ Resources:
         - Key: name
           Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForWebServer" ] ]
       VpcId: !ImportValue "network-VPCID"
-  
-  # ServerSpec Server SG
-  ServerSpecServerSecurityGroup:
+
+  # RDS SG
+  RdsSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupName: "PublicSgForServerSpec"
-      GroupDescription: "SecurityGroup for ServerSpecServer(public)"
+      GroupName: "PrivateSgForRDS"
+      GroupDescription: "SecurityGroup for RDS(private)"
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.0.1.0/24
       Tags:
         - Key: name
-          Value: !Join [ "-", [ "Ref":"ProjectId" ,"SecurityGroupForServerSpecServer" ] ]
-      VpcId: !ImportValue "network-VPCID"
+          Value: !Join [ "-", ["Ref":"ProjectId", "SecurityGroupForRDS"] ]
   
 Outputs:
   StackWebServerSG:
@@ -54,7 +53,7 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-WebServerSG"
   
-  StackServerSpecServerSG:
-    Value: !Ref ServerSpecServerSecurityGroup
+  StackRdsSG:
+    Value: !Ref RdsSecurityGroup
     Export:
-      Name: !Sub "${AWS::StackName}-ServerSpecServerSG"
+      Name: !Sub "${AWS::StackName}-RdsSG"
