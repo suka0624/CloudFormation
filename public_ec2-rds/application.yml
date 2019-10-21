@@ -39,6 +39,6 @@ Resources:
       MasterUsername: test
       MasterUserPassword: test
       DBSubnetGroupName:
-        - !Ref network-RdsSubnetGroup
+        - !ImportValue "network-RdsSubnetGroup"
       VPCSecurityGroups:
-        - !Ref security-RdsSG
+        - !ImportValue "security-RdsSG"
