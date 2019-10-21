@@ -38,6 +38,7 @@ Resources:
     Properties:
       GroupName: "PrivateSgForRDS"
       GroupDescription: "SecurityGroup for RDS(private)"
+      VpcId: !ImportValue "network-VPCID"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
