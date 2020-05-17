@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  EC2 create
+Parameters:
+  ProjectId:
+    Description: Project name id.
+    Type: String
+    MinLength: "3"
+    MaxLength: "10"
+    AllowedPattern: "[a-zA-Z0-9]*"
+    ConstraintDescription: must specify Project id.
+
+Resources:
+  # WebServer
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      NetworkInterfaces:
+        - SubnetId: !ImportValue "network-PublicSubnet"
+          GroupSet:
+            - !ImportValue "security-WebServerSG"
+          # Public IP割り当て
+          AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+      ImageId: ami-0056953fc28a2355f
+      InstanceType: t2.micro
+      Tags:
+        - Key: 'Name'
+          Value: !Join [ "-", [ "Ref":"ProjectId" ,"WebServer" ] ]
+      KeyName: s_suka
